@@ -15,7 +15,7 @@ import numpy as np
 from src.common import Box, iou_xyxy, make_stratified_split, nms, parse_voc
 from src.patches import _center_dist_to_boxes, _iou_and_cover
 from src.preprocess import TradParams, predict_image
-from src.slide_infer import grid_to_boxes
+from src.slide_infer import _axis_positions, grid_to_boxes
 
 
 def test_voc_is_one_based() -> None:
@@ -89,6 +89,19 @@ def test_patch_label_uses_center_not_iou() -> None:
     # 中心在缺陷外 → 不能算正样本
     assert _center_dist_to_boxes(160, 160, big) > 64 * 0.5
     print("  ok  滑窗标签口径（中心点）")
+
+
+def test_axis_positions_covers_region() -> None:
+    """两阶段的细搜区域必须铺满到边界，否则贴着粗框边缘的缺陷永远搜不到。"""
+    pos = _axis_positions(10, 90, patch=64, step=8, limit=200)
+    assert pos[0] == 10, pos[0]
+    assert pos[-1] + 64 >= 90, (pos[-1], pos[-1] + 64)
+    assert all(p + 64 <= 200 for p in pos), pos
+    assert all(b - a == 8 for a, b in zip(pos, pos[1:-1])), pos
+    # 区域比 patch 还小时，退化成单窗且不越界
+    tiny = _axis_positions(190, 200, patch=64, step=8, limit=200)
+    assert tiny == [136], tiny
+    print("  ok  细搜区域铺满（_axis_positions）")
 
 
 def test_grid_to_boxes_is_not_patch_sized() -> None:

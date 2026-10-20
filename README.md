@@ -123,7 +123,27 @@ threads=1: 365.0 ms/图   threads=2: 254.9    threads=4: 398.3    threads=8: 396
 - 所以这张表只证明三件事：两条管线都跑通、评估口径统一、结果可复现。**方法优劣的结论必须用真实 NEU-DET 重跑**，
   换数据只需一条命令（`python scripts/run_all.py data/NEU-DET`）。
 
-### 3.4 图（每一张都能自己复现）
+### 3.4 两阶段细搜：实现了，但**没有默认开**（一个方向相左的结果）
+
+粗网格出候选 → 每个候选框外扩 16 px → **只在框内**用 stride 8 重扫 → 分数加权质心 + 按亮格跨度定框 → 全局 NMS。
+成本只和候选数有关：`36 + 候选数×~42` 个窗口，比全图 stride 8（324 个窗口）便宜约 2.7 倍。
+
+| 配置 | 窗口数/图 | tune mAP@0.5 | val mAP@0.5 | val 漏检率 | 延迟 |
+|---|---|---|---|---|---|
+| 粗网格 stride 32 | 36 | 0.218 | **0.152** | 0.73 | 325 ms |
+| + 细搜 stride 8（框内） | 120 | **0.385** | 0.082 | 0.80 | 1263 ms |
+
+**两个 split 的方向是相反的**：tune 上 +77%，val 上 −46%。归因（按可能性排）：
+
+1. val 只有 12 张图 30 个框，这个量级上 mAP 的方差本身就有 ±0.1，单点差异不足以下结论；
+2. 细搜的响应集中在**缺陷核心**，而 GT 框覆盖整个扩展区 → 框天然偏小（`fine_scale` 在 tune 上选出的最优值就是 1.0，说明"需要外扩"这个先验也不成立）；
+3. 合成缺陷边缘梯度弱，8 像素格子容易闪烁，加权质心会被边缘格子带偏。
+
+**决策：默认关闭**（`--fine-stride 0`），开关和系数都留着，等真实数据（1800 张）再定。
+诚实版本是："我实现了、测了、两个 split 方向不一致，所以不宣称提升。"
+—— 样本量不足以支撑结论时，正确的动作是**不改默认值**，而不是改到好看为止。
+
+### 3.5 图（每一张都能自己复现）
 
 ![传统管线各阶段](docs/figs/01_trad_stages.png)
 
@@ -139,7 +159,7 @@ threads=1: 365.0 ms/图   threads=2: 254.9    threads=4: 398.3    threads=8: 396
 ![滑窗预测框偏移](docs/figs/04_cnn_pred.png)
 
 **图 3**：同图的最终框（红=预测，绿=GT）。框整体偏右下、偏大：粗网格 + 连通域合并的必然结果。
-工程解法是"粗定位 → 候选区域内细搜（stride 8）"的两阶段金字塔，我没有实现，写进了第 6 节局限。
+工程解法是"粗定位 → 候选区域内细搜（stride 8）"的两阶段金字塔，我实现了（3.4）但结果不稳定、默认关闭。
 
 ![传统基线预测框](docs/figs/02_trad_pred.png)
 
@@ -210,7 +230,7 @@ v2 的 AUC 已经 0.97，检测 mAP 却只有 **0.11**。原因是出框直接�
 - 延迟是 PyTorch CPU 实测，**没有 TensorRT/OpenVINO 的量化加速数字**，不编；
 - 传统基线的参数是网格搜索得到的，产线上必须按批次重新调，否则一周就漂；
 - 只做了"定位 + 单类"，没有做六类分类的端到端检测器（六类分类在传统路线上用最近质心判类器，精度很差 —— 这本身就是结论：**手工特征判类不可行**）；
-- 滑窗路线**没做两阶段（粗定位→局部细搜）**，所以框精度被 stride 卡住（图 3）；这是已知限制，不是没想到。
+- 滑窗路线做了两阶段细搜，但两个 split 方向相反（3.4），**所以默认关闭**——不是没想到，是不敢在 12 张 val 上下结论。
 
 ---
 
@@ -234,6 +254,8 @@ python -m src.trad_baseline --data-root data/NEU-DET --mode tune          # 只�
 python -m src.trad_baseline --data-root data/NEU-DET --mode eval --sweep  # val 报数 + 阈值扫描
 python -m src.train_cnn     --data-root data/NEU-DET --epochs 15 --batch 128 --lr 1e-3
 python -m src.slide_infer   --data-root data/NEU-DET --mode sweep         # 含阈值/stride 扫描
+# 两阶段细搜（见 3.4，默认关闭；tune 上选 fine-scale，val 只报数）
+python -m src.slide_infer   --data-root data/NEU-DET --mode eval --fine-stride 8 --fine-scale 1.0
 python -m src.evaluate      --preds results/trad/preds_val.json results/cnn/preds_val.json \
                             --labels trad slide-cnn --data-root data/NEU-DET --split val
 python -m src.bench_latency --data-root data/NEU-DET --thread-sweep
@@ -274,7 +296,7 @@ scripts/
 tools/
   inspect_grid.py  单图热力图+出框调试脚本
 tests/
-  test_basic.py    6 项自测：VOC 口径、IoU/NMS、切分确定性、中心点标签、出框尺度、传统基线能找到明显缺陷
+  test_basic.py    7 项自测：VOC 口径、IoU/NMS、切分确定性、中心点标签、出框尺度、细搜区域铺满、传统基线能找到明显缺陷
 docs/figs/          README 用的图（可用上面两条 draw 命令重新生成）
 ```
 
