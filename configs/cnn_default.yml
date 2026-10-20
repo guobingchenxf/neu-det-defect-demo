@@ -1,0 +1,32 @@
+# 滑窗 + 小 CNN 的默认配置
+# 与 CLI 默认值保持一致：src/patches.py / src/cnn_model.py / src/train_cnn.py / src/slide_infer.py
+
+patch:
+  size: 64             # 窗口边长：要能包住最小缺陷 + 一点上下文
+  stride: 32           # 推理步长；训练时正负样本与它无关
+  margin: 4            # 图边缘 pad，保证边缘缺陷也有完整窗口
+
+sampling:              # 训练集构造（每张图）
+  pos_per_image: 6     # 按 GT 框轮询取，保证每个缺陷都被采到
+  neg_per_image: 10
+  pos_center_tol: 5.0  # 中心点距缺陷边界 ≤ tol 像素 → 视为模糊区，丢弃（不软标签，直接扔）
+  neg_min_center_dist: 32.0  # 中心点距缺陷 ≥ stride → 负样本
+  hard_neg_iou: 0.05   # 与 GT 有轻微重叠（IoU 0.05~0.35）优先当负样本，教模型学边界
+
+model:
+  channels: [16, 32, 64, 128]
+  dropout: 0.1
+  params: 0.29M        # 实测：纯 CPU 可训练可推理
+
+train:
+  epochs: 15
+  batch_size: 32
+  lr: 1.0e-3
+  pos_weight: auto     # = 负样本数 / 正样本数（约 1.67），处理 6:10 的采样不均衡
+  seed: 42
+  val_split: tune      # 用 tune 选模型，val 只报数
+
+infer:
+  thr: 0.5             # 分数阈值（在 tune 集上扫 0.2~0.9 选工作点）
+  nms_iou: 0.4
+  box_margin: stride/2 # 一个亮格子代表格心 ± 半个步长的区域

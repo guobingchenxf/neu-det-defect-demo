@@ -1,0 +1,16 @@
+# 数据和结果不进仓库：数据集有版权，结果每个机器跑出来都不一样
+data/
+results/
+
+# 真要把图表传到 GitHub，用 -f 强加：
+#   git add -f results/figs/*.png
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.pt
+*.onnx
+.DS_Store
+.idea/
+.vscode/

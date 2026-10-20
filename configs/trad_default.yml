@@ -1,0 +1,24 @@
+# 传统基线的默认参数（与人眼可解释的一一对应）
+# 实际取值由 src/trad_baseline.py --mode tune 在 tune 集网格搜索后写入 results/trad/best_params.json
+# 这里保留的是"一次都没搜过"的保守初值，作为搜索空间的中心
+
+preprocess:
+  bg_kernel: 31        # 背景估计的中值核；必须大于缺陷尺度，否则背景被缺陷污染
+  clip_limit: 2.0      # CLAHE 对比度上限：>3 会把轧制条纹一起放大
+  tile: 8              # CLAHE 网格数
+  blur_k: 3            # 高斯核（奇数）
+  bin_method: otsu     # otsu | percentile
+  bin_scale: 1.0       # 阈值缩放：<1 更敏感（漏检↓ 过杀↑），>1 更保守
+  pct: 98.0            # percentile 模式用的分位点（只取最亮的 2% 梯度）
+  dark_k: 0.0          # >0 时叠加"暗缺陷"通道：阈值 = median - dark_k * std
+  close_k: 5
+  open_k: 3
+  merge_k: 3
+  merge_iter: 1
+
+filter:                # 形态学筛选（工业上比"面积阈值"更常用的是这三条）
+  min_area: 40
+  max_area_ratio: 0.9  # 超过全图 90% 的连通域一定是光照/背景，不是缺陷
+  min_fill: 0.12       # 面积/外接框面积：细长裂纹填充率低，不能过滤太狠
+  min_aspect: 0.08     # 短边/长边：过滤横贯全图的轧制条纹
+  min_score: 0.0       # 分数=框内均值梯度/p99.5，>1 表示比全图 99.5 分位还强

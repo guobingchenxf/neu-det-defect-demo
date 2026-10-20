@@ -1,0 +1,5 @@
+# 只用 CPU 也能跑完整个 demo：不需要 GPU，不需要 CUDA 版 torch
+numpy>=1.21
+opencv-python>=4.5
+torch>=2.0
+matplotlib>=3.5
