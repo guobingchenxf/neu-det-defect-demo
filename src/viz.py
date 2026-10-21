@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import cv2
 import numpy as np
@@ -87,3 +87,26 @@ def overlay_mask(gray: np.ndarray, mask: np.ndarray, path: Optional[str | Path] 
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(path), base)
     return base
+
+
+def pick_diverse(files: List[str], gts: Dict[str, List[Box]], n: int) -> List[str]:
+    """按"每类先各取一张"的顺序挑图，避免 draw 出来的全是同一类。
+
+    val 的前几张常常是 crazing（分层切分按主类排序），只看前 N 张会误判"所有图都这样"。
+    """
+    by_cls: Dict[str, List[str]] = {}
+    for f in files:
+        boxes = gts.get(f) or []
+        key = boxes[0].cls if boxes else "background"
+        by_cls.setdefault(key, []).append(f)
+    out: List[str] = []
+    depth = 0
+    order = sorted(by_cls)
+    while len(out) < min(n, len(files)) and depth < 50:
+        for c in order:
+            if depth < len(by_cls[c]):
+                out.append(by_cls[c][depth])
+                if len(out) >= n:
+                    break
+        depth += 1
+    return out

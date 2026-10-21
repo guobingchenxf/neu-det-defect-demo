@@ -312,11 +312,11 @@ def mode_draw(
     splits: Dict[str, List[str]],
     params: TradParams,
 ) -> None:
-    from .viz import draw_boxes, save_stages
+    from .viz import draw_boxes, pick_diverse, save_stages
 
     out_dir = Path(args.out_dir) / "draw"
     out_dir.mkdir(parents=True, exist_ok=True)
-    files = (splits.get(args.split) or [])[: args.draw_n]
+    files = pick_diverse(splits.get(args.split) or [], gts, args.draw_n)
     for name in files:
         gray = load_gray(img_dir / name)
         preds = predict_image(gray, params)

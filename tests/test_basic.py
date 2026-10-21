@@ -16,6 +16,7 @@ from src.common import Box, iou_xyxy, make_stratified_split, nms, parse_voc
 from src.patches import _center_dist_to_boxes, _iou_and_cover
 from src.preprocess import TradParams, predict_image
 from src.slide_infer import _axis_positions, grid_to_boxes
+from src.viz import pick_diverse
 
 
 def test_voc_is_one_based() -> None:
@@ -117,7 +118,7 @@ def test_grid_to_boxes_is_not_patch_sized() -> None:
     assert (b.x2 - b.x1) <= patch, (b.x2 - b.x1)
     assert (b.x2 - b.x1) == patch // 2, (b.x2 - b.x1)
     assert abs(b.x1 - (xs[2] + patch // 4)) < 1e-6, b.x1
-    print("  ok  热力图出框尺寸（中心点 ± patch/4）")
+    print("  ok  热力图出框尺寸（格心 ± stride/2，不是整张 patch）")
 
 
 def test_trad_finds_a_blob() -> None:
@@ -129,6 +130,33 @@ def test_trad_finds_a_blob() -> None:
     best = max(boxes, key=lambda b: b.score)
     assert best.x1 < 130 and best.x2 > 80 and best.y1 < 120 and best.y2 > 80, best.to_list()
     print(f"  ok  传统基线能找到合成块（{len(boxes)} 个框）")
+
+
+def test_pick_diverse_covers_each_class() -> None:
+    """draw 模式必须每类各挑一张：只看前 6 张会全是 crazing，容易误判"整份数据都这样"。"""
+    files = [f"img{i}.jpg" for i in range(8)]
+    gts = {f: [Box("crazing" if i % 2 else "scratches", 1, 1, 20, 20)] for i, f in enumerate(files)}
+    picked = pick_diverse(files, gts, 4)
+    assert len(picked) == 4, picked
+    assert len(set(picked)) == 4, "不能重复挑同一张"
+    assert {gts[n][0].cls for n in picked[:2]} == {"crazing", "scratches"}, picked
+    print("  ok  draw 按类挑图（pick_diverse）")
+
+
+def test_per_class_recall_uses_defect_label() -> None:
+    """逐类召回必须把该类 GT 的标签改成 defect 再按类别无关模式评估。
+
+    坑：预测标签统一是 defect，如果按 `classes=("inclusion",)` 去算，
+    类别不一致 → 一个都匹配不上 → 召回静默变成 0（我第一次跑逐类表就是这样，六类全 0）。
+    """
+    from src.common import DEFECT, evaluate_detections
+
+    preds = {"a.jpg": [Box(DEFECT, 10, 10, 50, 50, 0.9)]}
+    gts = {"a.jpg": [Box("inclusion", 10, 10, 50, 50, 1.0)]}
+    sub = {k: [Box(DEFECT, b.x1, b.y1, b.x2, b.y2, b.score) for b in v] for k, v in gts.items()}
+    assert evaluate_detections(preds, sub, classes=(DEFECT,))["recall"] == 1.0
+    assert evaluate_detections(preds, gts, classes=("inclusion",))["recall"] == 0.0
+    print("  ok  逐类召回的标签映射（不改标签会静默算成 0）")
 
 
 if __name__ == "__main__":

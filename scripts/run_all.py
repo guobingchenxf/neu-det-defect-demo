@@ -22,9 +22,12 @@ STEPS = [
     ("03_trad_tune", "src.trad_baseline", ["--data-root", DATA, "--mode", "tune"], False),
     ("04_trad_eval", "src.trad_baseline", ["--data-root", DATA, "--mode", "eval", "--split", "val", "--sweep"], False),
     ("05_cnn_train", "src.train_cnn", ["--data-root", DATA, "--epochs", "15", "--lr", "5e-4", "--threads", "4"], False),
-    ("06_slide_infer", "src.slide_infer", ["--data-root", DATA, "--mode", "sweep"], False),
+    # 0.3 是阈值扫描里漏检/过杀比较均衡的工作点，也是 README 主表的口径
+    ("06_slide_infer", "src.slide_infer", ["--data-root", DATA, "--mode", "sweep", "--thr", "0.3"], False),
+    # 定位交给 GT 框，CNN 只判类别 —— 这条才是真实数据上唯一能看的路线（README 3.4）
+    ("07_roi_cls", "src.train_cls", ["--data-root", DATA, "--epochs", "8"], False),
     (
-        "07_compare",
+        "08_compare",
         "src.evaluate",
         [
             "--preds", "results/trad/preds_val.json", "results/cnn/preds_val.json",
@@ -33,8 +36,15 @@ STEPS = [
         ],
         False,
     ),
-    ("08_latency", "src.bench_latency", ["--data-root", DATA, "--thread-sweep"], False),
-    ("09_tests", "tests.test_basic", [], False),
+    (
+        "09_per_class",
+        "tools.per_class_recall",
+        ["--preds", "results/trad/preds_val.json", "results/cnn/preds_val.json",
+         "--labels", "trad", "slide-cnn", "--data-root", DATA, "--split", "val"],
+        False,
+    ),
+    ("10_latency", "src.bench_latency", ["--data-root", DATA, "--thread-sweep"], False),
+    ("11_tests", "tests.test_basic", [], False),
 ]
 
 

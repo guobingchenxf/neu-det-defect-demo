@@ -191,7 +191,7 @@ def grid_to_boxes(
     """亮格子 → 框。
 
     关键：格子的坐标是**窗口左上角**，而模型判的是**窗口中心点**在不在缺陷里。
-    所以框要由"亮格子的中心点"反推：一个格子代表它中心 ± patch/4 的一小块区域。
+    所以框要由"亮格子的中心点"反推：一个格子代表它中心 ± stride/2（相邻格心距离的一半）。
     早先直接拿窗口左上角 + patch 当框，框天生就大一圈（40 像素的缺陷出 96 像素的框），
     IoU 全部卡在 0.5 以下，mAP 只有 0.11 —— 这个 bug 不看可视化很难发现。
     """
@@ -220,6 +220,18 @@ def grid_to_boxes(
         y1 = float(np.clip(min(rows) + half - margin, 0, h_img))
         x2 = float(np.clip(max(cols) + half + margin, 0, w_img))
         y2 = float(np.clip(max(rows) + half + margin, 0, h_img))
+        # 贴边缺陷要延伸到图像边缘：窗口中心最靠外也只能到 patch/2，
+        # 于是第一/最后一排窗口算出的框边永远离图像边界差 margin~patch/2，
+        # NEU-DET 里大量缺陷是贴着条带边缘裁进来的（例如 crazing_105 的 ymin=0），
+        # 不延伸的话这些框的 IoU 上限被硬压到 0.4 以下。
+        if left == 0:
+            x1 = 0.0
+        if top == 0:
+            y1 = 0.0
+        if left + cw == len(xs):
+            x2 = w_img
+        if top + ch == len(ys):
+            y2 = h_img
         if x2 - x1 < 2 or y2 - y1 < 2:
             continue
         raw.append(Box(DEFECT, x1, y1, x2, y2, score))
@@ -255,6 +267,10 @@ def main() -> None:
     gts_all = load_annotations(img_dir, ann_dir)
     splits = load_splits(Path(args.splits))
     files = list(gts_all) if args.which_split == "all" else splits.get(args.which_split, [])
+    if args.mode == "draw":
+        from .viz import pick_diverse
+
+        files = pick_diverse(files, {k: gts_all[k] for k in files}, args.draw_n)
     if args.limit:
         files = files[: args.limit]
     if not files:
@@ -307,8 +323,10 @@ def main() -> None:
         f"  mAP@0.5={m['mAP']} 召回={m['recall']} 漏检率={m['miss_rate']} "
         f"图级漏检={m['image_miss_rate']} 过杀={m['fp_per_image']}/图 框数={m['num_pred']}"
     )
+    # draw 模式只跑了 pick_diverse 挑出的少数图，别让它覆盖 eval 的全量预测
+    pred_name = f"preds_{args.which_split}.json" if args.mode != "draw" else f"preds_draw_{args.which_split}.json"
     save_preds(
-        out_dir / f"preds_{args.which_split}.json",
+        out_dir / pred_name,
         preds,
         meta={"method": "sliding-cnn", "patch": args.patch, "stride": args.stride,
               "fine_stride": args.fine_stride, "thr": args.thr, "ms_per_image": round(ms_per_img, 2)},

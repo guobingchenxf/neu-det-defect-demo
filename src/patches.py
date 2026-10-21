@@ -29,8 +29,12 @@ from torch.utils.data import Dataset
 
 from .common import Box
 
-MIN_GT_COVER = 0.02   # 中心在缺陷外、但窗口仍覆盖 2% 以上缺陷 → 歧义样本，丢弃
-NEG_MARGIN = 0.5      # 负样本中心要离任一 GT 至少这么多个 patch 远
+MIN_GT_COVER = 0.05   # 中心在缺陷外、但窗口仍覆盖 5% 以上缺陷 → 歧义样本，丢弃
+# 负样本中心离任一 GT 的最小距离（单位：patch）。
+# 合成数据上 0.5 够用；真实 NEU-DET 的框很大（pitted 常占满整图、crazing 中位 130px），
+# 0.5 的环带里几乎找不到"干净背景"，250 张图才采到 749 个负样本、正负比 57:43，
+# 于是 pos_weight=neg/pos<1 反向压制正类，推理时几乎没有格子能过 0.5 阈值（271 张只出 7 个框）。
+NEG_MARGIN = 0.3
 
 
 # --------------------------------------------------------------------------- #
@@ -127,7 +131,7 @@ def build_index(
         # 硬负样本：贴着某个 GT 框外侧一圈
         if boxes:
             for _ in range(n_hard):
-                for _try in range(30):
+                for _try in range(60):
                     b = rng.choice(list(boxes))
                     ang = rng.uniform(0, 2 * np.pi)
                     dist = patch * rng.uniform(0.5, 0.85)
@@ -138,7 +142,7 @@ def build_index(
                         break
         # 随机负样本
         for _ in range(neg_per_img - n_hard):
-            for _try in range(30):
+            for _try in range(60):
                 cx = rng.uniform(0, w)
                 cy = rng.uniform(0, h)
                 if is_clean_negative(cx, cy):

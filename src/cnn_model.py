@@ -16,7 +16,9 @@ import torch.nn as nn
 
 
 class SmallCNN(nn.Module):
-    def __init__(self, width: float = 1.0, in_ch: int = 1, dropout: float = 0.1):
+    def __init__(
+        self, width: float = 1.0, in_ch: int = 1, dropout: float = 0.1, num_classes: int = 1
+    ):
         super().__init__()
         c1, c2, c3 = int(32 * width), int(64 * width), int(128 * width)
 
@@ -36,12 +38,14 @@ class SmallCNN(nn.Module):
             nn.AdaptiveAvgPool2d(1),
             nn.Flatten(),
             nn.Dropout(dropout),
-            nn.Linear(c3, 1),
+            nn.Linear(c3, num_classes),
         )
         self.width = width
+        self.num_classes = num_classes
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.head(self.features(x)).squeeze(-1)  # (B,)
+        out = self.head(self.features(x))  # (B, num_classes)
+        return out.squeeze(-1) if self.num_classes == 1 else out
 
     @torch.no_grad()
     def predict_proba(self, x: torch.Tensor) -> torch.Tensor:
@@ -51,8 +55,8 @@ class SmallCNN(nn.Module):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
 
-def build_model(width: float = 1.0, dropout: float = 0.1) -> SmallCNN:
-    return SmallCNN(width=width, dropout=dropout)
+def build_model(width: float = 1.0, dropout: float = 0.1, num_classes: int = 1) -> SmallCNN:
+    return SmallCNN(width=width, dropout=dropout, num_classes=num_classes)
 
 
 def load_model(path: str, map_location: Optional[str] = "cpu") -> SmallCNN:
@@ -61,6 +65,7 @@ def load_model(path: str, map_location: Optional[str] = "cpu") -> SmallCNN:
     model = SmallCNN(
         width=float(cfg.get("width", 1.0)),
         dropout=float(cfg.get("dropout", 0.1)),
+        num_classes=int(cfg.get("num_classes", 1)),
     )
     state = ckpt.get("state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
     model.load_state_dict(state)

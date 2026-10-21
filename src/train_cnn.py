@@ -176,7 +176,12 @@ def main() -> None:
             n += x.size(0)
         sched.step()
         vm = evaluate_patches(model, va_ds)
-        tm = evaluate_patches(model, PatchDataset(tr_imgs[:200], tr_idx[:2000], patch=args.patch, train=False))
+        # 监控用的"训练子集"必须同时裁 images 和 entries：
+        # entries 里的 img_idx 指向 tr_imgs 的下标，只裁 images 会索引越界
+        # （真实数据 500 张时立刻炸：IndexError: list index out of range）。
+        sub_imgs = tr_imgs[:200]
+        sub_idx = [e for e in tr_idx if e[0] < len(sub_imgs)][:2000]
+        tm = evaluate_patches(model, PatchDataset(sub_imgs, sub_idx, patch=args.patch, train=False))
         row = {"epoch": ep, "loss": round(tot / max(n, 1), 4), **{f"val_{k}": v for k, v in vm.items()}, "train_auc": tm["auc"], "sec": round(time.time() - t_ep, 1)}
         history.append(row)  # type: ignore[arg-type]
         print(
