@@ -1,11 +1,5 @@
 """生成合成"假 NEU-DET"，用于在没有真实数据时把整条管线跑通。
-
-它替代不了真实数据（真实缺陷的纹理分布完全不同），但它保证：
-1. clone 下来就能跑通 make_splits → trad_baseline → train_cnn → slide_infer → evaluate，
-   不会因为"要先下 200MB 数据集"卡住；
-2. 也顺手当作单元测试：一个类一个类地构造，能验证标注解析、切分、评估、可视化都没写错。
-
-六类按 NEU-DET 的语义造：
+六类按 NEU-DET 的语义：
   crazing          细密低对比度裂纹网络（传统方法的重灾区）
   inclusion        条状深色夹杂
   patches          大面积不规则斑块
