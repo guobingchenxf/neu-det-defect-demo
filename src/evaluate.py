@@ -1,8 +1,4 @@
 """统一评估入口：把任意一份/多份预测 json 放在同一把尺子上量。
-
-有了它，"传统基线 vs 滑窗 CNN"的主结果表就是一条命令生成的，
-不是手工抄数字——这也是报告可复现的一部分。
-
 用法：
   python -m src.evaluate --preds results/trad/preds_val.json --split val
   python -m src.evaluate \
