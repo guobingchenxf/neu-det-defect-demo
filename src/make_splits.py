@@ -1,17 +1,4 @@
 """生成一次性的 train / tune / val 切分并落盘。
-
-为什么要单独一个 tune 集：
-传统管线的参数（阈值倍数、面积下限、合并核大小）需要搜索。如果在 val 上搜，
-报出来的就是"在测试集上调过参"的数字——这在工业评审里是最容易被抓的点。
-所以：train 训练判类器，tune 搜参数，val 只报数。
-
-另外这批数据是同一采集批次的子集，图片之间存在强相似性。这里的分层切分**不能**
-解决跨批次泛化问题（报告里会明确写出这个局限），但至少保证同一张图的相邻帧不会
-同时出现在 train 和 val（NEU-DET 每类图片文件名连续，这里按文件名排列后随机打散，
-并在每个 split 里保留类分布）。
-
-用法：
-    python -m src.make_splits --data-root data/NEU-DET --out data/splits.json
 """
 
 from __future__ import annotations
