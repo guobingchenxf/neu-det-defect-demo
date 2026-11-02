@@ -1,5 +1,3 @@
-"""可视化：叠加框、中间结果拼图。只用 OpenCV，避免为了画几张图引入 matplotlib 依赖。"""
-
 from __future__ import annotations
 
 from pathlib import Path
