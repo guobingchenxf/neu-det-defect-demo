@@ -1,14 +1,3 @@
-"""训练滑窗分类器（patch 级二分类）。
-
-几个刻意的选择：
-- **不用数据增强里的裁剪缩放**：滑窗在推理时会看到与原图同尺度的 patch，
-  训练时把目标缩放会制造 train/test 尺度不一致。
-- **pos_weight = neg/pos**：缺陷 patch 远少于背景 patch，不加权会退化成"全判背景"，
-  表现为 AUC 还行但召回为 0——这个坑在报告里会作为一条失败记录。
-- **val 用 patch 级 AUC 选模型**，但最终交付的指标一定是**框级**的（见 slide_infer），
-  因为产线不关心 patch 准确率。
-"""
-
 from __future__ import annotations
 
 import argparse
