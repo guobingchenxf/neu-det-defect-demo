@@ -15,7 +15,6 @@ from .common import Box, DEFECT
 
 @dataclass
 class TradParams:
-    """传统管线的全部可调参数。默认值是在 200×200 灰度图上调出来的起点，不是最优。"""
 
     # --- 预处理 ---
     bg_kernel: int = 31        # 背景校正核；0/1 表示关闭
