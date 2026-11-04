@@ -1,16 +1,3 @@
-"""ROI 六分类：工业质检真正好用的那半步。
-
-为什么另开一个任务而不是继续修滑窗检测：
-- 定位交给传统方法/连通域，CNN 只回答"这一小块属于哪类缺陷"，是产线常见分工
-  （对应 NIII 的"小模型初筛 + 大模型复判"里的小模型那一层）；
-- NEU-DET 的框大量贴边、尺度跨 14~200px，固定窗口分类器在定位上先天吃亏，
-  但在"给定 ROI 判类别"上，CNN 的语义能力是真能兑现的；
-- 这个任务能在 CPU 上 2~3 分钟训完，适合放进 demo 让人一键复现。
-
-用法：
-    python -m src.train_cls --data-root data/NEU-DET --epochs 10
-"""
-
 from __future__ import annotations
 
 import argparse
