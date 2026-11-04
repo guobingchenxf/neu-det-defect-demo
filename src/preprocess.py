@@ -217,7 +217,7 @@ def predict_path(path: str | Path, p: TradParams) -> List[Box]:
 
 
 # --------------------------------------------------------------------------- #
-# 特征（给"判类器"用；传统方法定位可以，判类基本靠手工特征，这正是它的短板）
+# 特征
 # --------------------------------------------------------------------------- #
 def box_features(gray: np.ndarray, enhanced: np.ndarray, grad8: np.ndarray, box: Box) -> np.ndarray:
     h, w = gray.shape[:2]
