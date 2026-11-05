@@ -3,7 +3,7 @@
     python scripts/run_all.py                 # 合成数据全流程
     python scripts/run_all.py data/NEU-DET    # 真实数据全流程
 
-每一步都单独落日志到 results/logs/NN_xxx.log，方便回头查是哪一步变了。
+每一步记录日志到 results/logs/NN_xxx.log
 """
 
 from __future__ import annotations
