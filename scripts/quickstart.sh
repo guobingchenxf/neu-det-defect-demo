@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 一键跑完两条路线（传统基线 + 滑窗小 CNN）并出对比表。
 # 用法：
-#   bash scripts/quickstart.sh              # 没有数据就自动生成合成数据
+#   bash scripts/quickstart.sh              # 生成合成数据
 #   bash scripts/quickstart.sh data/NEU-DET # 用真实 NEU-DET
 set -euo pipefail
 cd "$(dirname "$0")/.."
