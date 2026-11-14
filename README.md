@@ -25,7 +25,7 @@ data/NEU-DET/
 └── ANNOTATIONS/   # *.xml（1800，VOC bndbox，共 4189 个框）
 ```
 
-下载：数据集不在仓库里（37 MB）。官方入口是东北大学宋克臣/闫云辉的主页；
+下载：官方入口是东北大学宋克臣/闫云辉的主页；
 也可以从 Kaggle / Roboflow 上搜 "NEU-DET" 找到同源镜像，**只要 `IMAGES + ANNOTATIONS` 这一份**（不是 NEU-CLS）。
 
 | 类别 | 含义 | 传统方法的难点 |
