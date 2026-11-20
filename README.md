@@ -275,7 +275,7 @@ v2 的 AUC 已经 0.97，检测 mAP 却只有 **0.11**。原因是出框直接�
 
 第一版直接拿"膨胀后的连通域"算外接框，框系统性偏大，IoU 被吃掉一大截，tune 集 F1 只有 0.389。
 改成"分组看膨胀结果、出框看 `膨胀 ∩ 原始掩膜`"后 F1 → 0.414。
-（数字不大，但体现的是同一条排查顺序：**指标难看先怀疑方法学，而不是先换模型**。）
+
 
 ### 4.4 VOC 的 1-based 端点：每个框小 1 像素
 
@@ -312,7 +312,7 @@ v2 的 AUC 已经 0.97，检测 mAP 却只有 **0.11**。原因是出框直接�
 ## 7. Quick Start
 
 ```bash
-pip install -r requirements.txt          # CPU 版 torch 就够（实测 torch 2.0.1+cpu）
+pip install -r requirements.txt          # torch 2.0.1 + cpu
 
 # 一键（没有真实数据会自动生成合成数据，全流程约 10 分钟）
 python scripts/run_all.py
