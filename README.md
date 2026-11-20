@@ -340,7 +340,7 @@ python -m tests.test_basic                                                      
 可视化（预测框、预处理各阶段、滑窗热力图、混淆矩阵）：
 
 ```bash
-python -m src.trad_baseline --mode draw --draw-n 6      # 每类各挑一张，不是只画前 6 张
+python -m src.trad_baseline --mode draw --draw-n 6      # 每类各挑一张
 python -m src.slide_infer   --mode draw --draw-n 6 --stride 16 --thr 0.3
 python -m tools.plot_confusion --metrics results/cls/metrics.json --out docs/figs/05_cls_confusion.png
 python tools/inspect_grid.py                            # 单图"热力图 + 出框"叠加，调参时用
