@@ -170,7 +170,7 @@ AUC 从 0.66 升到 0.687 —— 方向对，但补不回结构性缺陷。
 | 单 ROI 推理 | P50 **14.9 ms** / P95 17.4 ms（96×96，4 线程 CPU） |
 
 逐类召回：crazing 1.000 / inclusion 0.878 / patches 0.992 / pitted 1.000 / rolled-in_scale 1.000 / scratches 0.987。
-**最难的 crazing 在分类上一点不难（1.000），难的是"在整图上找到它在哪"** 
+**最难的 crazing 在分类上表现出色，难的是"在整图上找到精确位置"** 
 这说明：*分类能力和定位能力是不同的两个方面，而工业现场往往卡在后者*。
 
 混淆矩阵（图 5）：主要错误集中在 inclusion → pitted（8 例）和 inclusion → patches（4 例），
