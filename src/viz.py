@@ -52,9 +52,8 @@ def _label(panel: np.ndarray, text: str) -> np.ndarray:
 
 
 def save_stages(gray: np.ndarray, params: TradParams, path: str | Path) -> np.ndarray:
-    """把管线每一步贴成 2×3 拼图：原图 / 光照归一 / CLAHE / 梯度 / 二值掩膜 / 形态学后。
+    """把管线每一步贴成 2×3 拼图：原图 / 光照归一 / CLAHE / 梯度 / 二值掩膜 / 形态
 
-    这张图是报告里"传统方法为什么这么设计"的定性证据，也是面试时最容易被追问的地方。
     """
     st = run_pipeline(gray, params)
     panels = [
