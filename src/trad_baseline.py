@@ -118,7 +118,7 @@ def mode_tune(args: argparse.Namespace, img_dir: Path, gts: Dict[str, List[Box]]
 
     rows_sorted = sorted(rows, key=lambda r: -float(r["f1"]))
     best_f1 = rows_sorted[0]
-    # 第二个交付点：在"高召回"约束下取过杀最低的一组（工业上常这么选）
+
     high_recall = [r for r in rows if float(r["recall"]) >= 0.85]
     best_hr = min(high_recall, key=lambda r: float(r["fp_per_image"])) if high_recall else None
 
