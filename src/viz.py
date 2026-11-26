@@ -21,7 +21,7 @@ def draw_boxes(
     path: Optional[str | Path] = None,
     scale: int = 2,
 ) -> np.ndarray:
-    """GT 绿（实线）、预测红（虚线风格用细线表示）。放大后写盘，方便放进报告。"""
+    """GT 绿（实线）、预测红（虚线风格用细线表示）"""
     img = to_bgr(gray)
     for b in gts:
         cv2.rectangle(img, (int(b.x1), int(b.y1)), (int(b.x2), int(b.y2)), (0, 200, 0), 2)
