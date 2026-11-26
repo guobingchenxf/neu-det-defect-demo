@@ -87,9 +87,8 @@ def overlay_mask(gray: np.ndarray, mask: np.ndarray, path: Optional[str | Path] 
 
 
 def pick_diverse(files: List[str], gts: Dict[str, List[Box]], n: int) -> List[str]:
-    """按"每类先各取一张"的顺序挑图，避免 draw 出来的全是同一类。
-
-    val 的前几张常常是 crazing（分层切分按主类排序），只看前 N 张会误判"所有图都这样"。
+    """
+    按"每类先各取一张"的顺序挑图，避免 draw 出来的全是同一类。
     """
     by_cls: Dict[str, List[str]] = {}
     for f in files:
