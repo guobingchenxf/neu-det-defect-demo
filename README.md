@@ -264,7 +264,7 @@ v2 的 AUC 已经 0.97，检测 mAP 却只有 **0.11**。原因是出框直接�
 
 正确做法：一个亮格子代表"格心附近 `± stride/2` 的区域"，于是出框取**所有亮格心**的外接框再外扩半个步长。
 
-同一次排查里还揪出一个纯代码 bug：`cv2.connectedComponentsWithStats` 返回的是 `[x, y, w, h, area]`，
+同一次排查发现一个纯代码 bug：`cv2.connectedComponentsWithStats` 返回的是 `[x, y, w, h, area]`，
 我按 `[top, left, h, w]` 解包，导致切片行列颠倒、偶发空切片。它没有抛异常，只留下一条
 `RuntimeWarning: Mean of empty slice` —— 顺手把这条警告当成了排查入口。
 
